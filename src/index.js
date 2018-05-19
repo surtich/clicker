@@ -1,80 +1,60 @@
 import React, { Component } from "react";
 import { render } from "react-dom";
+import R from "ramda";
 
-import WithCounter from "./WithCounter";
-import Adder from "./Adder";
-import Remover from "./Remover";
+import Order from "./Order";
 
-const AdderRemoverWithCounter = WithCounter(({ next, canRemove }) => {
-  return (
-    <div>
-      <Adder next={next} />
-      <Remover next={next} canRemove={canRemove} />
-    </div>
-  );
-});
-
-const styles = {
-  fontFamily: "sans-serif",
-  textAlign: "center"
-};
-
-const initialState = {
-  count: 0,
-  acc: 0,
-  actions: []
-};
+const initialOrder = [
+  {
+    name: "Patatas",
+    quantity: 2
+  },
+  {
+    name: "Cerveza",
+    quantity: 4
+  },
+  {
+    name: "Croquetas",
+    quantity: 4
+  }
+];
 
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = initialState;
+    this.state = {
+      order: initialOrder,
+      ordersHistory: [initialOrder]
+    };
   }
 
-  handleNext = count => {
+  confirmOrder = order => {
+    const ordersHistory = R.append(order, this.state.ordersHistory);
     this.setState({
-      count
+      order: R.filter(({ quantity }) => quantity > 0, order),
+      ordersHistory
     });
   };
 
-  handleEnd = _ => {
-    const { count, acc, actions } = this.state;
-    if (count !== 0) {
-      const newAction = `Ended new ${count} clicks. Total count ${acc + count}`;
-      this.setState(
-        {
-          acc: acc + count
-        },
-        () =>
-          this.setState({
-            count: 0,
-            actions: [...actions, newAction]
-          })
-      );
-    }
-  };
-
-  reset = () => {
-    this.setState(initialState);
-  };
-
   render() {
-    const { count, acc, actions } = this.state;
+    const { order, ordersHistory } = this.state;
     return (
-      <div style={styles}>
-        <div>Count: {count}</div>
-        <div>Acc: {acc + count}</div>
-        <button onClick={() => this.reset()}>Reset</button>
-        <AdderRemoverWithCounter
-          onNext={this.handleNext}
-          onComplete={this.handleEnd}
-          canRemove={acc + count > 0}
-        />
+      <div>
+        <Order order={order} confirmOrder={this.confirmOrder} />
         <textarea
-          cols={50}
+          cols={80}
           rows={20}
           disabled
-          value={actions.reduce((xs, x) => x + "\n" + xs, "")}
+          value={ordersHistory.reduce(
+            (orders, order) =>
+              "*** " +
+              (orders ? "New order" : "Initial Order") +
+              ": " +
+              JSON.stringify(order) +
+              "\n" +
+              orders,
+            ""
+          )}
         />
       </div>
     );
