@@ -3,6 +3,43 @@ import R from "ramda";
 
 import OrderProduct from "./OrderProduct";
 import Button from "./Button";
+import WithClicker from "./WithClicker";
+
+const OrderWithAutoConfirm = WithClicker(
+  ({ endOrder, order, modifyOrder, confirmOrder, undoOrder, next, stop }) => {
+    return (
+      <div>
+        {endOrder.map(({ name, quantity }) => (
+          <OrderProduct
+            key={name}
+            name={name}
+            quantity={quantity}
+            modifyOrder={order => {
+              next();
+              modifyOrder(order);
+            }}
+          />
+        ))}
+        <Button
+          title="undo"
+          disabled={R.equals(endOrder, order)}
+          handleClick={() => {
+            stop("cancel");
+            undoOrder();
+          }}
+        />
+        <Button
+          title="confirm"
+          disabled={R.equals(endOrder, order)}
+          handleClick={() => {
+            stop("cancel");
+            confirmOrder(endOrder);
+          }}
+        />
+      </div>
+    );
+  }
+);
 
 class Order extends Component {
   constructor(props) {
@@ -30,36 +67,26 @@ class Order extends Component {
     });
   };
 
-  reset = () => {
+  undoOrder = () => {
     this.setState({
       endOrder: this.props.order
     });
   };
 
   render() {
-    const { endOrder } = this.state;
     const { order, confirmOrder } = this.props;
     return (
       <div>
         <div>
-          {endOrder.map(({ name, quantity }) => (
-            <OrderProduct
-              name={name}
-              quantity={quantity}
-              modifyOrder={this.modifyOrder}
-            />
-          ))}
+          <OrderWithAutoConfirm
+            order={order}
+            endOrder={this.state.endOrder}
+            modifyOrder={this.modifyOrder}
+            confirmOrder={confirmOrder}
+            undoOrder={this.undoOrder}
+            onComplete={() => confirmOrder(this.state.endOrder)}
+          />
         </div>
-        <Button
-          title="reset"
-          disabled={R.equals(endOrder, order)}
-          handleClick={this.reset}
-        />
-        <Button
-          title="confirm"
-          disabled={R.equals(endOrder, order)}
-          handleClick={() => confirmOrder(endOrder)}
-        />
       </div>
     );
   }
