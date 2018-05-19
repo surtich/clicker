@@ -5,18 +5,21 @@ class Button extends Component {
     const {
       title = "click",
       handleClick = _ => _,
-      disabled = false
+      disabled = false,
+      visible = true
     } = this.props;
     return (
-      <div style={{ display: "inline-block", margin: "10px" }}>
-        <button
-          disabled={disabled}
-          onClick={handleClick}
-          style={{ padding: "10px" }}
-        >
-          {title}
-        </button>
-      </div>
+      visible && (
+        <div style={{ display: "inline-block", margin: "10px" }}>
+          <button
+            disabled={disabled}
+            onClick={handleClick}
+            style={{ padding: "10px" }}
+          >
+            {title}
+          </button>
+        </div>
+      )
     );
   }
 }
