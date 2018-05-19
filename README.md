@@ -1,2 +1,0 @@
-# clicker
-Created with CodeSandbox
