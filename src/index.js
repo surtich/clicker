@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { render } from "react-dom";
 import R from "ramda";
 
-import Order, { OrderWithAddProducts } from "./Order";
+import OrderDetails, { OrderDetailsWithAddProducts } from "./Order";
 import Button from "./Button";
 
 const products = [
@@ -44,7 +44,7 @@ const initialOrder = [
   }
 ];
 
-class App extends Component {
+class Order extends Component {
   constructor(props) {
     super(props);
     const order = R.sortBy(R.prop("pos"), initialOrder);
@@ -107,9 +107,10 @@ class App extends Component {
     );
   };
 
-  undoOrder = () => {
+  cancelOrder = () => {
     this.setState({
-      endOrder: this.state.order
+      endOrder: this.state.order,
+      showOrder: true
     });
   };
 
@@ -164,7 +165,7 @@ class App extends Component {
     const {
       confirmOrder,
       modifyOrder,
-      undoOrder,
+      cancelOrder,
       setHasNavigated,
       setHasEdited,
       mergeProducts
@@ -174,7 +175,7 @@ class App extends Component {
       order,
       confirmOrder,
       modifyOrder,
-      undoOrder,
+      cancelOrder,
       setHasNavigated,
       setHasEdited,
       haveChanges,
@@ -185,16 +186,16 @@ class App extends Component {
     return (
       <div>
         {showOrder ? (
-          <Order
+          <OrderDetails
             {...commonProps}
             endOrder={endOrder}
             onComplete={() => this.confirmOrder(endOrder)}
           />
         ) : (
-          <Order
+          <OrderDetails
             {...commonProps}
             endOrder={mergeProducts()}
-            Component={OrderWithAddProducts}
+            Component={OrderDetailsWithAddProducts}
           />
         )}
         <Button
@@ -209,7 +210,7 @@ class App extends Component {
             value={ordersHistory.reduce(
               (orders, order) =>
                 "*** " +
-                (orders ? "New order" : "Initial Order") +
+                (orders ? "Order modified" : "Initial Order") +
                 ": " +
                 JSON.stringify(order) +
                 "\n" +
@@ -223,4 +224,4 @@ class App extends Component {
   }
 }
 
-render(<App />, document.getElementById("root"));
+render(<Order />, document.getElementById("root"));

@@ -5,12 +5,12 @@ import OrderProduct from "./OrderProduct";
 import Button from "./Button";
 import WithClicker from "./WithClicker";
 
-const createOrder = ({
+const createOrderDetails = ({
   endOrder,
   order,
   modifyOrder,
   confirmOrder,
-  undoOrder,
+  cancelOrder,
   showConfirm = true,
   hideZeroes = false,
   haveChanges = false,
@@ -41,10 +41,10 @@ const createOrder = ({
         />
       ))}
       <Button
-        title="undo"
+        title="cancel"
         disabled={!haveChanges}
         visible={haveChanges}
-        handleClick={undoOrder}
+        handleClick={cancelOrder}
       />
       <Button
         title="confirm"
@@ -56,24 +56,24 @@ const createOrder = ({
   );
 };
 
-export const OrderWithAddProducts = createOrder;
+export const OrderDetailsWithAddProducts = createOrderDetails;
 
-export const OrderWithAutoConfirm = WithClicker(
+export const OrderDetailsWithAutoConfirm = WithClicker(
   ({
     endOrder,
     order,
     modifyOrder,
     confirmOrder,
-    undoOrder,
+    cancelOrder,
     haveChanges,
     hasNavigated,
     setHasNavigated,
     hasEdited,
     setHasEdited,
-    next,
-    stop
+    emitClick,
+    emitStop
   }) => {
-    return createOrder({
+    return createOrderDetails({
       showConfirm: false,
       hideZeroes: true,
       endOrder,
@@ -83,38 +83,38 @@ export const OrderWithAutoConfirm = WithClicker(
       hasEdited,
       setHasEdited: hasEdited => {
         if (hasEdited) {
-          stop("cancel");
+          emitStop("cancel");
         }
         setHasEdited(hasEdited);
       },
       modifyOrder: order => {
         setHasNavigated(false);
         if (hasEdited) {
-          stop("cancel");
+          emitStop("cancel");
         } else {
-          next();
+          emitClick();
         }
         modifyOrder(order);
       },
       confirmOrder: () => {
         setHasNavigated(false);
         setHasEdited(false);
-        stop("cancel");
+        emitStop("cancel");
         confirmOrder();
       },
-      undoOrder: () => {
+      cancelOrder: () => {
         setHasNavigated(false);
         setHasEdited(false);
-        stop("cancel");
-        undoOrder();
+        emitStop("cancel");
+        cancelOrder();
       }
     });
   }
 );
 
-class Order extends Component {
+class OrderDetails extends Component {
   render() {
-    const { Component = OrderWithAutoConfirm, ...props } = this.props;
+    const { Component = OrderDetailsWithAutoConfirm, ...props } = this.props;
     return (
       <div>
         <div>
@@ -125,4 +125,4 @@ class Order extends Component {
   }
 }
 
-export default Order;
+export default OrderDetails;

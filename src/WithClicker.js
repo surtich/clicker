@@ -15,7 +15,7 @@ const WithClicker = WrappedComponent =>
       const accumulator$ = this.counter$.scan((ticks, one) => ticks + one);
       const end$ = this.counter$
         .switchMap(() =>
-          Observable.merge(Observable.of("end").delay(1000), this.stop$)
+          Observable.merge(Observable.of("end").delay(2000), this.stop$)
         )
         .take(1);
       end$.subscribe(endValue => endValue !== "cancel" && onComplete());
@@ -48,8 +48,8 @@ const WithClicker = WrappedComponent =>
     render() {
       return (
         <WrappedComponent
-          next={(inc = 1) => this.counter$.next(inc)}
-          stop={(endValue = "end") => this.stop$.next(endValue)}
+          emitClick={(inc = 1) => this.counter$.next(inc)}
+          emitStop={(endValue = "end") => this.stop$.next(endValue)}
           {...this.props}
         />
       );
