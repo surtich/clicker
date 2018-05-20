@@ -14,7 +14,9 @@ const createOrder = ({
   showConfirm = true,
   hideZeroes = false,
   haveChanges = false,
-  hasNavigated = false
+  hasNavigated = false,
+  hasEdited = false,
+  setHasEdited
 }) => {
   const filterOrder = hideZeroes
     ? endOrder.filter(({ quantity }) => quantity > 0)
@@ -35,6 +37,7 @@ const createOrder = ({
           quantity={quantity}
           diff={calcDiff({ name, quantity })}
           modifyOrder={modifyOrder}
+          setHasEdited={setHasEdited}
         />
       ))}
       <Button
@@ -46,7 +49,7 @@ const createOrder = ({
       <Button
         title="confirm"
         disabled={!haveChanges}
-        visible={(showConfirm || hasNavigated) && haveChanges}
+        visible={(showConfirm || hasNavigated || hasEdited) && haveChanges}
         handleClick={confirmOrder}
       />
     </div>
@@ -64,7 +67,9 @@ export const OrderWithAutoConfirm = WithClicker(
     undoOrder,
     haveChanges,
     hasNavigated,
-    resetHasNavigated,
+    setHasNavigated,
+    hasEdited,
+    setHasEdited,
     next,
     stop
   }) => {
@@ -75,18 +80,31 @@ export const OrderWithAutoConfirm = WithClicker(
       order,
       haveChanges,
       hasNavigated,
+      hasEdited,
+      setHasEdited: hasEdited => {
+        if (hasEdited) {
+          stop("cancel");
+        }
+        setHasEdited(hasEdited);
+      },
       modifyOrder: order => {
-        resetHasNavigated();
-        next();
+        setHasNavigated(false);
+        if (hasEdited) {
+          stop("cancel");
+        } else {
+          next();
+        }
         modifyOrder(order);
       },
       confirmOrder: () => {
-        resetHasNavigated();
+        setHasNavigated(false);
+        setHasEdited(false);
         stop("cancel");
         confirmOrder();
       },
       undoOrder: () => {
-        resetHasNavigated();
+        setHasNavigated(false);
+        setHasEdited(false);
         stop("cancel");
         undoOrder();
       }

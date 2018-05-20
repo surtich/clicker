@@ -59,7 +59,8 @@ class App extends Component {
         0,
         order
       ),
-      hasNavigated: false
+      hasNavigated: false,
+      hasEdited: false
     };
   }
 
@@ -74,7 +75,8 @@ class App extends Component {
       order: endOrder,
       ordersHistory,
       showOrder: true,
-      hasNavigated: false
+      hasNavigated: false,
+      hasEdited: false
     });
   };
 
@@ -114,13 +116,20 @@ class App extends Component {
   navigate = () => {
     this.setState({
       showOrder: !this.state.showOrder,
-      hasNavigated: true
+      hasNavigated: true,
+      hasEdited: false
     });
   };
 
-  resetHasNavigated = () => {
+  setHasNavigated = (hasNavigated = false) => {
     this.setState({
-      hasNavigated: false
+      hasNavigated
+    });
+  };
+
+  setHasEdited = (hasEdited = false) => {
+    this.setState({
+      hasEdited
     });
   };
 
@@ -143,28 +152,36 @@ class App extends Component {
       endOrder,
       ordersHistory,
       showOrder,
-      hasNavigated
+      hasNavigated,
+      hasEdited
     } = this.state;
+
     const haveChanges = !R.equals(
       R.sortBy(R.prop("pos"), endOrder.filter(({ quantity }) => quantity > 0)),
       order
     );
+
     const {
       confirmOrder,
       modifyOrder,
       undoOrder,
-      resetHasNavigated,
+      setHasNavigated,
+      setHasEdited,
       mergeProducts
     } = this;
+
     const commonProps = {
       order,
       confirmOrder,
       modifyOrder,
       undoOrder,
-      resetHasNavigated,
+      setHasNavigated,
+      setHasEdited,
       haveChanges,
-      hasNavigated
+      hasNavigated,
+      hasEdited
     };
+
     return (
       <div>
         {showOrder ? (

@@ -10,9 +10,12 @@ class OrderProduct extends Component {
     const { name, modifyOrder } = this.props;
     modifyOrder({ name, quantity: 0 });
   };
-
+  setOrderProduct = event => {
+    const { name, modifyOrder } = this.props;
+    modifyOrder({ name, quantity: +event.target.value });
+  };
   render() {
-    const { name, quantity, diff = 0 } = this.props;
+    const { name, quantity, diff = 0, setHasEdited } = this.props;
     return (
       <div>
         <div style={{ display: "inline-block" }}>{name}</div>
@@ -38,6 +41,12 @@ class OrderProduct extends Component {
           title="-"
           disabled={quantity <= 0}
           handleClick={() => this.modifyOrderProduct(-1)}
+        />
+        <input
+          size={5}
+          value={quantity}
+          onChange={this.setOrderProduct}
+          onFocus={() => setHasEdited(true)}
         />
         <Button
           title="remove"
