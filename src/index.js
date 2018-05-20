@@ -58,9 +58,7 @@ class Order extends Component {
           "pos" in orderProduct ? Math.max(max, orderProduct.pos) : max,
         0,
         order
-      ),
-      hasNavigated: false,
-      hasEdited: false
+      )
     };
   }
 
@@ -74,9 +72,7 @@ class Order extends Component {
     this.setState({
       order: endOrder,
       ordersHistory,
-      showOrder: true,
-      hasNavigated: false,
-      hasEdited: false
+      showOrder: true
     });
   };
 
@@ -116,21 +112,7 @@ class Order extends Component {
 
   navigate = () => {
     this.setState({
-      showOrder: !this.state.showOrder,
-      hasNavigated: true,
-      hasEdited: false
-    });
-  };
-
-  setHasNavigated = (hasNavigated = false) => {
-    this.setState({
-      hasNavigated
-    });
-  };
-
-  setHasEdited = (hasEdited = false) => {
-    this.setState({
-      hasEdited
+      showOrder: !this.state.showOrder
     });
   };
 
@@ -148,39 +130,21 @@ class Order extends Component {
   };
 
   render() {
-    const {
-      order,
-      endOrder,
-      ordersHistory,
-      showOrder,
-      hasNavigated,
-      hasEdited
-    } = this.state;
+    const { order, endOrder, ordersHistory, showOrder } = this.state;
 
     const haveChanges = !R.equals(
       R.sortBy(R.prop("pos"), endOrder.filter(({ quantity }) => quantity > 0)),
       order
     );
 
-    const {
-      confirmOrder,
-      modifyOrder,
-      cancelOrder,
-      setHasNavigated,
-      setHasEdited,
-      mergeProducts
-    } = this;
+    const { confirmOrder, modifyOrder, cancelOrder, mergeProducts } = this;
 
     const commonProps = {
       order,
       confirmOrder,
       modifyOrder,
       cancelOrder,
-      setHasNavigated,
-      setHasEdited,
-      haveChanges,
-      hasNavigated,
-      hasEdited
+      haveChanges
     };
 
     return (

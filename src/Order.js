@@ -11,12 +11,9 @@ const createOrderDetails = ({
   modifyOrder,
   confirmOrder,
   cancelOrder,
-  showConfirm = true,
+  withConfirm = true,
   hideZeroes = false,
-  haveChanges = false,
-  hasNavigated = false,
-  hasEdited = false,
-  setHasEdited
+  haveChanges = false
 }) => {
   const filterOrder = hideZeroes
     ? endOrder.filter(({ quantity }) => quantity > 0)
@@ -37,7 +34,6 @@ const createOrderDetails = ({
           quantity={quantity}
           diff={calcDiff({ name, quantity })}
           modifyOrder={modifyOrder}
-          setHasEdited={setHasEdited}
         />
       ))}
       <Button
@@ -49,7 +45,7 @@ const createOrderDetails = ({
       <Button
         title="confirm"
         disabled={!haveChanges}
-        visible={(showConfirm || hasNavigated || hasEdited) && haveChanges}
+        visible={withConfirm && haveChanges}
         handleClick={confirmOrder}
       />
     </div>
@@ -66,45 +62,24 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
     confirmOrder,
     cancelOrder,
     haveChanges,
-    hasNavigated,
-    setHasNavigated,
-    hasEdited,
-    setHasEdited,
     emitClick,
     emitStop
   }) => {
     return createOrderDetails({
-      showConfirm: false,
+      withConfirm: false,
       hideZeroes: true,
       endOrder,
       order,
       haveChanges,
-      hasNavigated,
-      hasEdited,
-      setHasEdited: hasEdited => {
-        if (hasEdited) {
-          emitStop("cancel");
-        }
-        setHasEdited(hasEdited);
-      },
       modifyOrder: order => {
-        setHasNavigated(false);
-        if (hasEdited) {
-          emitStop("cancel");
-        } else {
-          emitClick();
-        }
+        emitClick();
         modifyOrder(order);
       },
       confirmOrder: () => {
-        setHasNavigated(false);
-        setHasEdited(false);
         emitStop("cancel");
         confirmOrder();
       },
       cancelOrder: () => {
-        setHasNavigated(false);
-        setHasEdited(false);
         emitStop("cancel");
         cancelOrder();
       }
