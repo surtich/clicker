@@ -34,6 +34,7 @@ const createOrderDetails = ({
           quantity={quantity}
           diff={calcDiff({ name, quantity })}
           modifyOrder={modifyOrder}
+          lockSlowActions={haveChanges && withConfirm}
         />
       ))}
       <Button

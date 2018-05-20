@@ -165,6 +165,7 @@ class Order extends Component {
         <Button
           title={showOrder ? "add products" : "back"}
           handleClick={this.navigate}
+          visible={showOrder || (!showOrder && !haveChanges)}
         />
         <div>
           <textarea
