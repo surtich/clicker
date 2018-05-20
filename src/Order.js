@@ -12,11 +12,20 @@ const createOrder = ({
   confirmOrder,
   undoOrder,
   showConfirm = true,
-  hideZeroes = false
+  hideZeroes = false,
+  haveChanges = false,
+  hasNavigated = false
 }) => {
   const filterOrder = hideZeroes
     ? endOrder.filter(({ quantity }) => quantity > 0)
     : endOrder;
+  const calcDiff = ({ name, quantity }) => {
+    const quantityProduct = R.prop(
+      "quantity",
+      R.find(({ name: nameProduct }) => nameProduct === name, order)
+    );
+    return quantityProduct ? quantity - quantityProduct : quantity;
+  };
   return (
     <div>
       {filterOrder.map(({ name, quantity }) => (
@@ -24,19 +33,21 @@ const createOrder = ({
           key={name}
           name={name}
           quantity={quantity}
+          diff={calcDiff({ name, quantity })}
           modifyOrder={modifyOrder}
         />
       ))}
       <Button
         title="undo"
-        disabled={R.equals(endOrder, order)}
+        disabled={!haveChanges}
+        visible={haveChanges}
         handleClick={undoOrder}
       />
       <Button
         title="confirm"
-        disabled={R.equals(endOrder, order)}
-        visible={showConfirm}
-        handleClick={() => confirmOrder(endOrder)}
+        disabled={!haveChanges}
+        visible={(showConfirm || hasNavigated) && haveChanges}
+        handleClick={confirmOrder}
       />
     </div>
   );
@@ -45,21 +56,37 @@ const createOrder = ({
 export const OrderWithAddProducts = createOrder;
 
 export const OrderWithAutoConfirm = WithClicker(
-  ({ endOrder, order, modifyOrder, confirmOrder, undoOrder, next, stop }) => {
+  ({
+    endOrder,
+    order,
+    modifyOrder,
+    confirmOrder,
+    undoOrder,
+    haveChanges,
+    hasNavigated,
+    resetHasNavigated,
+    next,
+    stop
+  }) => {
     return createOrder({
       showConfirm: false,
       hideZeroes: true,
       endOrder,
       order,
+      haveChanges,
+      hasNavigated,
       modifyOrder: order => {
+        resetHasNavigated();
         next();
         modifyOrder(order);
       },
       confirmOrder: () => {
+        resetHasNavigated();
         stop("cancel");
-        confirmOrder(endOrder);
+        confirmOrder();
       },
       undoOrder: () => {
+        resetHasNavigated();
         stop("cancel");
         undoOrder();
       }
@@ -68,74 +95,12 @@ export const OrderWithAutoConfirm = WithClicker(
 );
 
 class Order extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      endOrder: R.clone(props.order),
-      lastPos: R.reduce(
-        (max, orderProduct) =>
-          "pos" in orderProduct ? Math.max(max, orderProduct.pos) : max,
-        0,
-        props.order
-      )
-    };
-  }
-
-  static getDerivedStateFromProps({ order }, { endOrder }) {
-    return order !== endOrder ? { endOrder: order } : null;
-  }
-
-  modifyOrder = ({ name, quantity }) => {
-    const { endOrder, lastPos } = this.state;
-    let nextPos = lastPos + 1;
-    const modifier = R.map(
-      R.ifElse(
-        R.propEq("name", name),
-        R.assoc("quantity", quantity),
-        product => product
-      )
-    );
-
-    this.setState(
-      {
-        endOrder: modifier(endOrder).map(orderProduct => {
-          if (!("pos" in orderProduct && orderProduct !== 0)) {
-            orderProduct.pos = nextPos++;
-          }
-          return orderProduct;
-        })
-      },
-      () => {
-        this.setState({
-          lastPos: nextPos - 1
-        });
-      }
-    );
-  };
-
-  undoOrder = () => {
-    this.setState({
-      endOrder: this.props.order
-    });
-  };
-
   render() {
-    const {
-      order,
-      confirmOrder,
-      Component = OrderWithAutoConfirm
-    } = this.props;
+    const { Component = OrderWithAutoConfirm, ...props } = this.props;
     return (
       <div>
         <div>
-          <Component
-            order={order}
-            endOrder={this.state.endOrder}
-            modifyOrder={this.modifyOrder}
-            confirmOrder={confirmOrder}
-            undoOrder={this.undoOrder}
-            onComplete={() => confirmOrder(this.state.endOrder)}
-          />
+          <Component {...props} />
         </div>
       </div>
     );

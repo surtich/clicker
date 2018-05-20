@@ -18,16 +18,11 @@ const WithClicker = WrappedComponent =>
           Observable.merge(Observable.of("end").delay(4000), this.stop$)
         )
         .take(1);
-      end$.subscribe(
-        endValue => endValue !== "cancel" && onComplete(),
-        _ => _,
-        () => console.log("end!")
-      );
+      end$.subscribe(endValue => endValue !== "cancel" && onComplete());
       accumulator$.takeUntil(end$).subscribe(
         onNext,
         error => console.log("Error in WithClicker: ", error),
         () => {
-          console.log(this.counter$);
           this.start();
         }
       );
@@ -38,6 +33,7 @@ const WithClicker = WrappedComponent =>
     }
 
     componentWillUnmount() {
+      this.stop$.next("cancel");
       this.counter$ && this.counter$.unsubscribe();
       this.stop$.unsubscribe();
     }
@@ -53,7 +49,7 @@ const WithClicker = WrappedComponent =>
       return (
         <WrappedComponent
           next={(inc = 1) => this.counter$.next(inc)}
-          stop={endValue => this.stop$.next((endValue = "end"))}
+          stop={(endValue = "end") => this.stop$.next(endValue)}
           {...this.props}
         />
       );

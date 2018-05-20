@@ -2,12 +2,17 @@ import React, { Component } from "react";
 import Button from "./Button";
 
 class OrderProduct extends Component {
-  modyfyOrderProduct(inc) {
+  modifyOrderProduct = inc => {
     const { name, quantity, modifyOrder } = this.props;
     modifyOrder({ name, quantity: quantity + inc });
-  }
+  };
+  removeOrderProduct = () => {
+    const { name, modifyOrder } = this.props;
+    modifyOrder({ name, quantity: 0 });
+  };
+
   render() {
-    const { name, quantity } = this.props;
+    const { name, quantity, diff = 0 } = this.props;
     return (
       <div>
         <div style={{ display: "inline-block" }}>{name}</div>
@@ -19,13 +24,25 @@ class OrderProduct extends Component {
           }}
         >
           {quantity}
+          <span
+            style={{
+              marginLeft: "10px"
+            }}
+          >
+            {diff > 0 ? "+" + diff : diff < 0 ? diff : null}
+          </span>
         </div>
 
-        <Button title="+" handleClick={() => this.modyfyOrderProduct(+1)} />
+        <Button title="+" handleClick={() => this.modifyOrderProduct(+1)} />
         <Button
           title="-"
           disabled={quantity <= 0}
-          handleClick={() => this.modyfyOrderProduct(-1)}
+          handleClick={() => this.modifyOrderProduct(-1)}
+        />
+        <Button
+          title="remove"
+          visible={quantity > 0}
+          handleClick={this.removeOrderProduct}
         />
       </div>
     );

@@ -50,38 +50,84 @@ class App extends Component {
     const order = R.sortBy(R.prop("pos"), initialOrder);
     this.state = {
       order,
+      endOrder: R.clone(order),
       ordersHistory: [order],
-      showOrder: true
+      showOrder: true,
+      lastPos: R.reduce(
+        (max, orderProduct) =>
+          "pos" in orderProduct ? Math.max(max, orderProduct.pos) : max,
+        0,
+        order
+      ),
+      hasNavigated: false
     };
   }
 
-  confirmOrder = order => {
-    const orderWithoutZeroes = R.filter(({ quantity }) => quantity > 0, order);
-    const sortedOrder = R.sortBy(
-      orderProduct => orderProduct.pos || orderProduct.name,
-      orderWithoutZeroes
-    );
-    const ordersHistory = R.append(sortedOrder, this.state.ordersHistory);
-    if (R.equals(this.state.order, sortedOrder)) {
+  confirmOrder = () => {
+    const { endOrder, order } = this.state;
+
+    if (R.equals(order, endOrder)) {
       return;
     }
+    const ordersHistory = R.append(endOrder, this.state.ordersHistory);
     this.setState({
-      order: sortedOrder,
+      order: endOrder,
       ordersHistory,
-      showOrder: true
+      showOrder: true,
+      hasNavigated: false
+    });
+  };
+
+  modifyOrder = ({ name, quantity }) => {
+    const { endOrder, lastPos } = this.state;
+    let nextPos = lastPos + 1;
+    const orderProduct = {
+      ...(endOrder.find(({ name: productName }) => productName === name) || {
+        pos: nextPos++
+      }),
+      ...{ name, quantity }
+    };
+    this.setState(
+      {
+        endOrder: R.sortBy(
+          R.prop("pos"),
+          [
+            ...endOrder.filter(({ name: productName }) => productName !== name),
+            orderProduct
+          ].filter(({ quantity }) => quantity > 0)
+        )
+      },
+      () => {
+        this.setState({
+          lastPos: nextPos - 1
+        });
+      }
+    );
+  };
+
+  undoOrder = () => {
+    this.setState({
+      endOrder: this.state.order
     });
   };
 
   navigate = () => {
     this.setState({
-      showOrder: !this.state.showOrder
+      showOrder: !this.state.showOrder,
+      hasNavigated: true
+    });
+  };
+
+  resetHasNavigated = () => {
+    this.setState({
+      hasNavigated: false
     });
   };
 
   mergeProducts = () => {
-    const { order } = this.state;
+    const { endOrder } = this.state;
     return products.map(({ name }) => {
-      const orderProduct = order.find(
+      const orderProduct = endOrder.find(
         ({ name: nameProduct }) => name === nameProduct
       );
       if (orderProduct) {
@@ -92,15 +138,45 @@ class App extends Component {
   };
 
   render() {
-    const { order, ordersHistory, showOrder } = this.state;
+    const {
+      order,
+      endOrder,
+      ordersHistory,
+      showOrder,
+      hasNavigated
+    } = this.state;
+    const haveChanges = !R.equals(
+      R.sortBy(R.prop("pos"), endOrder.filter(({ quantity }) => quantity > 0)),
+      order
+    );
+    const {
+      confirmOrder,
+      modifyOrder,
+      undoOrder,
+      resetHasNavigated,
+      mergeProducts
+    } = this;
+    const commonProps = {
+      order,
+      confirmOrder,
+      modifyOrder,
+      undoOrder,
+      resetHasNavigated,
+      haveChanges,
+      hasNavigated
+    };
     return (
       <div>
         {showOrder ? (
-          <Order order={order} confirmOrder={this.confirmOrder} />
+          <Order
+            {...commonProps}
+            endOrder={endOrder}
+            onComplete={() => this.confirmOrder(endOrder)}
+          />
         ) : (
           <Order
-            order={this.mergeProducts()}
-            confirmOrder={this.confirmOrder}
+            {...commonProps}
+            endOrder={mergeProducts()}
             Component={OrderWithAddProducts}
           />
         )}
