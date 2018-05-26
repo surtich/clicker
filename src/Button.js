@@ -1,6 +1,14 @@
 import React, { Component } from "react";
+import R from "ramda";
 
 class Button extends Component {
+  shouldComponentUpdate(nextProps) {
+    return R.any(prop => !R.eqProps(prop, nextProps, this.props), [
+      "title",
+      "disabled",
+      "visible"
+    ]);
+  }
   render() {
     const {
       title = "click",

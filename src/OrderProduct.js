@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import Button from "./Button";
 
 class OrderProduct extends Component {
-  modifyOrderProduct = inc => {
+  modifyOrderProduct = inc => () => {
     const { name, quantity, modifyOrder } = this.props;
     modifyOrder({ name, quantity: quantity + inc });
   };
@@ -14,6 +14,12 @@ class OrderProduct extends Component {
     const { name, modifyOrder } = this.props;
     modifyOrder({ name, quantity: +event.target.value });
   };
+  shouldComponentUpdate(nextProps) {
+    return (
+      nextProps.quantity !== this.props.quantity ||
+      nextProps.diff !== this.props.diff
+    );
+  }
   render() {
     const { name, quantity, diff = 0, lockSlowActions } = this.props;
     return (
@@ -36,11 +42,11 @@ class OrderProduct extends Component {
           </span>
         </div>
 
-        <Button title="+" handleClick={() => this.modifyOrderProduct(+1)} />
+        <Button title="+" handleClick={this.modifyOrderProduct(+1)} />
         <Button
           title="-"
           disabled={quantity <= 0}
-          handleClick={() => this.modifyOrderProduct(-1)}
+          handleClick={this.modifyOrderProduct(-1)}
         />
         {!lockSlowActions && (
           <input size={5} value={quantity} onChange={this.setOrderProduct} />

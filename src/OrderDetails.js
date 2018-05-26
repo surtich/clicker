@@ -69,7 +69,7 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
     return createOrderDetails({
       withConfirm: false,
       hideZeroes: true,
-      endOrder,
+      endOrder: R.sortBy(R.prop("pos"), endOrder),
       order,
       haveChanges,
       modifyOrder: order => {
@@ -89,6 +89,13 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
 );
 
 class OrderDetails extends Component {
+  shouldComponentUpdate(nextProps) {
+    return (
+      !R.equals(nextProps.endOrder, this.props.endOrder) ||
+      !R.equals(nextProps.order !== this.props.order) ||
+      nextProps.haveChanges !== this.props.haveChanges
+    );
+  }
   render() {
     const { Component = OrderDetailsWithAutoConfirm, ...props } = this.props;
     return (

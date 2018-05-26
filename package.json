@@ -1,5 +1,5 @@
 {
-  "name": "new",
+  "name": "clicker-react",
   "version": "1.0.0",
   "description": "",
   "keywords": [],
@@ -9,7 +9,8 @@
     "react": "16.3.2",
     "react-dom": "16.3.2",
     "react-scripts": "1.1.4",
-    "rxjs": "5.5.10"
+    "rxjs": "5.5.10",
+    "why-did-you-update": "0.1.1"
   },
   "devDependencies": {},
   "scripts": {

@@ -49,7 +49,8 @@ class Order extends Component {
     const order = R.sortBy(R.prop("pos"), initialOrder);
     this.state = {
       order,
-      endOrder: R.clone(order),
+      endOrder: order,
+      haveChanges: false,
       ordersHistory: [order],
       showOrder: true,
       lastPos: R.reduce(
@@ -67,51 +68,61 @@ class Order extends Component {
     if (R.equals(order, endOrder)) {
       return;
     }
-    const ordersHistory = R.append(endOrder, this.state.ordersHistory);
+    const newOrder = endOrder.filter(({ quantity }) => quantity > 0);
+    const ordersHistory = R.append(newOrder, this.state.ordersHistory);
     this.setState({
-      order: endOrder,
+      endOrder: newOrder,
+      order: newOrder,
       ordersHistory,
-      showOrder: true
+      showOrder: true,
+      haveChanges: false
     });
   };
 
   modifyOrder = ({ name, quantity }) => {
-    const { endOrder, lastPos } = this.state;
+    const { order, endOrder, lastPos } = this.state;
     let nextPos = lastPos + 1;
-    const orderProduct = {
-      ...(endOrder.find(({ name: productName }) => productName === name) || {
-        pos: nextPos++
-      }),
-      ...{ name, quantity }
-    };
-    this.setState(
-      {
-        endOrder: R.sortBy(
-          R.prop("pos"),
-          [
-            ...endOrder.filter(({ name: productName }) => productName !== name),
-            orderProduct
-          ].filter(({ quantity }) => quantity > 0)
+
+    const newOrderProduct = R.map(
+      R.when(
+        R.propEq("name", name),
+        R.pipe(
+          R.assoc("quantity", quantity),
+          orderProduct =>
+            "pos" in orderProduct
+              ? orderProduct
+              : { ...orderProduct, ...{ pos: nextPos++ } }
         )
-      },
-      () => {
-        this.setState({
-          lastPos: nextPos - 1
-        });
-      }
+      ),
+      endOrder
     );
+    this.setState({
+      endOrder: newOrderProduct,
+      haveChanges: !R.equals(
+        R.sortBy(R.prop("name"), order),
+        R.sortBy(R.prop("name"), newOrderProduct).filter(
+          ({ quantity }) => quantity > 0
+        )
+      ),
+      lastPos: nextPos - 1
+    });
   };
 
   cancelOrder = () => {
     this.setState({
       endOrder: this.state.order,
-      showOrder: true
+      showOrder: true,
+      haveChanges: false
     });
   };
 
   navigate = () => {
+    const { showOrder, endOrder, order } = this.state;
     this.setState({
-      showOrder: !this.state.showOrder
+      showOrder: !showOrder,
+      endOrder: !showOrder
+        ? endOrder.filter(({ quantity }) => quantity > 0)
+        : this.mergeProducts()
     });
   };
 
@@ -128,17 +139,28 @@ class Order extends Component {
     });
   };
 
-  render() {
-    const { order, endOrder, ordersHistory, showOrder } = this.state;
-
-    const haveChanges = !R.equals(
-      R.sortBy(R.prop("pos"), endOrder.filter(({ quantity }) => quantity > 0)),
-      order
+  shouldComponentUpdate(nextProps, nextState) {
+    return (
+      !R.equals(nextState.endOrder, this.state.endOrder) ||
+      !R.equals(nextState.order !== this.state.order) ||
+      nextState.haveChanges !== this.state.haveChanges ||
+      nextState.showOrder !== this.state.showOrder
     );
+  }
+
+  render() {
+    const {
+      order,
+      endOrder,
+      haveChanges,
+      ordersHistory,
+      showOrder
+    } = this.state;
 
     const { confirmOrder, modifyOrder, cancelOrder, mergeProducts } = this;
 
     const commonProps = {
+      endOrder,
       order,
       confirmOrder,
       modifyOrder,
@@ -149,15 +171,10 @@ class Order extends Component {
     return (
       <div>
         {showOrder ? (
-          <OrderDetails
-            {...commonProps}
-            endOrder={endOrder}
-            onComplete={() => this.confirmOrder(endOrder)}
-          />
+          <OrderDetails {...commonProps} onComplete={this.confirmOrder} />
         ) : (
           <OrderDetails
             {...commonProps}
-            endOrder={mergeProducts()}
             Component={OrderDetailsWithAddProducts}
           />
         )}
