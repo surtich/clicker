@@ -1,104 +1,191 @@
 import React, { Component } from "react";
 import R from "ramda";
 
-import OrderProduct from "./OrderProduct";
+import OrderDetails, { OrderDetailsWithAddProducts } from "./OrderDetails";
 import Button from "./Button";
-import WithClicker from "./WithClicker";
 
-const createOrderDetails = ({
-  endOrder,
-  order,
-  modifyOrder,
-  confirmOrder,
-  cancelOrder,
-  withConfirm = true,
-  hideZeroes = false,
-  haveChanges = false
-}) => {
-  const filterOrder = hideZeroes
-    ? endOrder.filter(({ quantity }) => quantity > 0)
-    : endOrder;
-  const calcDiff = ({ name, quantity }) => {
-    const quantityProduct = R.prop(
-      "quantity",
-      R.find(({ name: nameProduct }) => nameProduct === name, order)
-    );
-    return quantityProduct ? quantity - quantityProduct : quantity;
-  };
-  return (
-    <div>
-      {filterOrder.map(({ name, quantity }) => (
-        <OrderProduct
-          key={name}
-          name={name}
-          quantity={quantity}
-          diff={calcDiff({ name, quantity })}
-          modifyOrder={modifyOrder}
-          lockSlowActions={!withConfirm}
-        />
-      ))}
-      <Button
-        title="cancel"
-        disabled={!haveChanges}
-        visible={haveChanges}
-        handleClick={cancelOrder}
-      />
-      <Button
-        title="confirm"
-        disabled={!haveChanges}
-        visible={withConfirm && haveChanges}
-        handleClick={confirmOrder}
-      />
-    </div>
-  );
-};
-
-export const OrderDetailsWithAddProducts = createOrderDetails;
-
-export const OrderDetailsWithAutoConfirm = WithClicker(
-  ({
-    endOrder,
-    order,
-    modifyOrder,
-    confirmOrder,
-    cancelOrder,
-    haveChanges,
-    emitClick,
-    emitStop
-  }) => {
-    return createOrderDetails({
-      withConfirm: false,
-      hideZeroes: true,
-      endOrder,
-      order,
-      haveChanges,
-      modifyOrder: order => {
-        emitClick();
-        modifyOrder(order);
-      },
-      confirmOrder: () => {
-        emitStop("cancel");
-        confirmOrder();
-      },
-      cancelOrder: () => {
-        emitStop("cancel");
-        cancelOrder();
-      }
-    });
+const products = [
+  {
+    name: "Agua"
+  },
+  {
+    name: "Cerveza"
+  },
+  {
+    name: "Croquetas"
+  },
+  {
+    name: "Patatas"
+  },
+  {
+    name: "Pollo"
+  },
+  {
+    name: "Tarta"
   }
-);
+];
 
-class OrderDetails extends Component {
+const initialOrder = [
+  {
+    name: "Patatas",
+    quantity: 2,
+    pos: 1
+  },
+  {
+    name: "Cerveza",
+    quantity: 4,
+    pos: 3
+  },
+  {
+    name: "Croquetas",
+    quantity: 4,
+    pos: 2
+  }
+];
+
+class Order extends Component {
+  constructor(props) {
+    super(props);
+    const order = R.sortBy(R.prop("pos"), initialOrder);
+    this.state = {
+      order,
+      endOrder: R.clone(order),
+      ordersHistory: [order],
+      showOrder: true,
+      lastPos: R.reduce(
+        (max, orderProduct) =>
+          "pos" in orderProduct ? Math.max(max, orderProduct.pos) : max,
+        0,
+        order
+      )
+    };
+  }
+
+  confirmOrder = () => {
+    const { endOrder, order } = this.state;
+
+    if (R.equals(order, endOrder)) {
+      return;
+    }
+    const ordersHistory = R.append(endOrder, this.state.ordersHistory);
+    this.setState({
+      order: endOrder,
+      ordersHistory,
+      showOrder: true
+    });
+  };
+
+  modifyOrder = ({ name, quantity }) => {
+    const { endOrder, lastPos } = this.state;
+    let nextPos = lastPos + 1;
+    const orderProduct = {
+      ...(endOrder.find(({ name: productName }) => productName === name) || {
+        pos: nextPos++
+      }),
+      ...{ name, quantity }
+    };
+    this.setState(
+      {
+        endOrder: R.sortBy(
+          R.prop("pos"),
+          [
+            ...endOrder.filter(({ name: productName }) => productName !== name),
+            orderProduct
+          ].filter(({ quantity }) => quantity > 0)
+        )
+      },
+      () => {
+        this.setState({
+          lastPos: nextPos - 1
+        });
+      }
+    );
+  };
+
+  cancelOrder = () => {
+    this.setState({
+      endOrder: this.state.order,
+      showOrder: true
+    });
+  };
+
+  navigate = () => {
+    this.setState({
+      showOrder: !this.state.showOrder
+    });
+  };
+
+  mergeProducts = () => {
+    const { endOrder } = this.state;
+    return products.map(({ name }) => {
+      const orderProduct = endOrder.find(
+        ({ name: nameProduct }) => name === nameProduct
+      );
+      if (orderProduct) {
+        return orderProduct;
+      }
+      return { name, quantity: 0 };
+    });
+  };
+
   render() {
-    const { Component = OrderDetailsWithAutoConfirm, ...props } = this.props;
+    const { order, endOrder, ordersHistory, showOrder } = this.state;
+
+    const haveChanges = !R.equals(
+      R.sortBy(R.prop("pos"), endOrder.filter(({ quantity }) => quantity > 0)),
+      order
+    );
+
+    const { confirmOrder, modifyOrder, cancelOrder, mergeProducts } = this;
+
+    const commonProps = {
+      order,
+      confirmOrder,
+      modifyOrder,
+      cancelOrder,
+      haveChanges
+    };
+
     return (
       <div>
+        {showOrder ? (
+          <OrderDetails
+            {...commonProps}
+            endOrder={endOrder}
+            onComplete={() => this.confirmOrder(endOrder)}
+          />
+        ) : (
+          <OrderDetails
+            {...commonProps}
+            endOrder={mergeProducts()}
+            Component={OrderDetailsWithAddProducts}
+          />
+        )}
+        <Button
+          title={showOrder ? "add products" : "back"}
+          handleClick={this.navigate}
+          visible={showOrder || (!showOrder && !haveChanges)}
+        />
         <div>
-          <Component {...props} />
+          <textarea
+            cols={80}
+            rows={20}
+            disabled
+            value={ordersHistory.reduce(
+              (orders, order) =>
+                "*** " +
+                (orders ? "Order modified" : "Initial Order") +
+                ": " +
+                JSON.stringify(order) +
+                "\n" +
+                orders,
+              ""
+            )}
+          />
         </div>
       </div>
     );
   }
 }
 
-export default OrderDetails;
+export default Order;
