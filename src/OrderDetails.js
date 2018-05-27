@@ -60,7 +60,6 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
     endOrder,
     order,
     modifyOrder,
-    confirmOrder,
     cancelOrder,
     haveChanges,
     emitClick,
@@ -75,10 +74,6 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
       modifyOrder: order => {
         emitClick();
         modifyOrder(order);
-      },
-      confirmOrder: () => {
-        emitStop("cancel");
-        confirmOrder();
       },
       cancelOrder: () => {
         emitStop("cancel");

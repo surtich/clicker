@@ -64,7 +64,6 @@ class Order extends Component {
 
   confirmOrder = () => {
     const { endOrder, order } = this.state;
-
     if (R.equals(order, endOrder)) {
       return;
     }
@@ -117,7 +116,7 @@ class Order extends Component {
   };
 
   navigate = () => {
-    const { showOrder, endOrder, order } = this.state;
+    const { showOrder, endOrder } = this.state;
     this.setState({
       showOrder: !showOrder,
       endOrder: !showOrder
@@ -157,7 +156,7 @@ class Order extends Component {
       showOrder
     } = this.state;
 
-    const { confirmOrder, modifyOrder, cancelOrder, mergeProducts } = this;
+    const { confirmOrder, modifyOrder, cancelOrder } = this;
 
     const commonProps = {
       endOrder,
