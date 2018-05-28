@@ -145,10 +145,9 @@ class Order extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     return (
-      !R.equals(nextState.endOrder, this.state.endOrder) ||
-      !R.equals(nextState.order !== this.state.order) ||
       nextState.haveChanges !== this.state.haveChanges ||
-      nextState.showOrder !== this.state.showOrder
+      nextState.showOrder !== this.state.showOrder ||
+      !R.equals(nextState.endOrder, this.state.endOrder)
     );
   }
 
