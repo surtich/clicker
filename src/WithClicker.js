@@ -13,16 +13,17 @@ const WithClicker = WrappedComponent =>
 
     start = () => {
       const { onComplete = _ => _ } = this.props;
-      this.wrapper$.subscribe(_ => {
-        this.clicker$
-          .debounceTime(2000)
-          .takeUntil(this.stop$)
-          .take(1)
-          .subscribe({
-            next: onComplete,
-            complete: _ => this.wrapper$.next()
-          });
-      });
+      this.wrapper$
+        .concatMap(_ =>
+          this.clicker$
+            .debounceTime(2000)
+            .takeUntil(this.stop$)
+            .take(1)
+            .do(onComplete)
+        )
+        .subscribe({
+          next: _ => this.wrapper$.next()
+        });
       this.wrapper$.next();
     };
 
@@ -40,7 +41,7 @@ const WithClicker = WrappedComponent =>
       return (
         <WrappedComponent
           emitClick={_ => this.clicker$.next()}
-          emitStop={(endValue = "end") => this.stop$.next(endValue)}
+          emitStop={() => this.stop$.next()}
           {...this.props}
         />
       );
