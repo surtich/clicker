@@ -95,16 +95,21 @@ class Order extends Component {
       ),
       endOrder
     );
+
+    const haveChanges = !R.equals(
+      R.sortBy(R.prop("name"), order),
+      R.sortBy(R.prop("name"), newOrderProduct).filter(
+        ({ quantity }) => quantity > 0
+      )
+    );
+
     this.setState({
       endOrder: newOrderProduct,
-      haveChanges: !R.equals(
-        R.sortBy(R.prop("name"), order),
-        R.sortBy(R.prop("name"), newOrderProduct).filter(
-          ({ quantity }) => quantity > 0
-        )
-      ),
+      haveChanges,
       lastPos: nextPos - 1
     });
+
+    return haveChanges;
   };
 
   cancelOrder = () => {

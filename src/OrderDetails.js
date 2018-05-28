@@ -71,12 +71,12 @@ export const OrderDetailsWithAutoConfirm = WithClicker(
       endOrder: R.sortBy(R.prop("pos"), endOrder),
       order,
       haveChanges,
-      modifyOrder: order => {
-        emitClick();
-        modifyOrder(order);
+      modifyOrder: orderProduct => {
+        const newHaveChanges = modifyOrder(orderProduct);
+        newHaveChanges ? emitClick() : emitStop();
       },
       cancelOrder: () => {
-        emitStop("cancel");
+        emitStop();
         cancelOrder();
       }
     });
